@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>蜜蜂拼字練習</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="app-card" aria-live="polite">
+      <header class="brand">
+        <span class="brand-mark" aria-hidden="true">🐝</span>
+        <div>
+          <h1>蜜蜂拼字練習</h1>
+          <p>萬字王練習系統</p>
+        </div>
+      </header>
+
+      <div id="entryView" class="view">
+        <div class="hero">
+          <span class="hero-icon" aria-hidden="true">🐝</span>
+          <h2>請選擇練習方式</h2>
+          <p>可以進行拼字測驗，也可以先聽單字、搜尋單字慢慢練習。</p>
+        </div>
+
+        <div class="choice-stack">
+          <button class="choice-button" id="chooseTestingBtn" type="button">
+            <strong>測驗模式</strong>
+            <span>聽單字，輸入正確拼字</span>
+          </button>
+          <button class="choice-button" id="choosePracticeBtn" type="button">
+            <strong>練習模式</strong>
+            <span>瀏覽、搜尋、播放單字</span>
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <article>
+            <span id="totalWordCount">0</span>
+            <p>單字總數</p>
+          </article>
+          <article>
+            <span id="lastScore">--</span>
+            <p>最近成績</p>
+          </article>
+          <article>
+            <span id="missedCount">0</span>
+            <p>可重練單字</p>
+          </article>
+        </div>
+      </div>
+
+      <div id="setupView" class="view hidden">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow" id="activityLabel">測驗模式</p>
+            <h2>選擇等級</h2>
+          </div>
+          <button class="text-button" id="backToEntryBtn" type="button">返回</button>
+        </div>
+
+        <div class="control-group">
+          <label for="modeSelect">等級</label>
+          <select id="modeSelect">
+            <option value="all">全部等級</option>
+          </select>
+        </div>
+
+        <div class="control-grid" id="testingControls">
+          <label class="switch-row">
+            <input type="checkbox" id="shuffleToggle" checked>
+            <span>打亂順序</span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="autoSpeakToggle" checked>
+            <span>自動播放</span>
+          </label>
+        </div>
+
+        <div class="control-group" id="quizLimitGroup">
+          <label for="quizLimit">題數</label>
+          <select id="quizLimit">
+            <option value="all">全部</option>
+            <option value="10">10 題</option>
+            <option value="20">20 題</option>
+            <option value="30">30 題</option>
+            <option value="50">50 題</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="speechRate">播放速度 <span id="rateValue">0.78x</span></label>
+          <input type="range" id="speechRate" min="0.55" max="1" step="0.01" value="0.78">
+        </div>
+
+        <button class="primary-action" id="startBtn" type="button">開始測驗</button>
+        <button class="secondary-action" id="resetHistoryBtn" type="button">清除紀錄</button>
+      </div>
+
+      <div id="quizView" class="view hidden">
+        <header class="quiz-header">
+          <div>
+            <p class="eyebrow" id="modeLabel">全部等級</p>
+            <h2 id="progressText">第 1 題 / 共 0 題</h2>
+          </div>
+          <div class="score-pill">
+            <span id="correctCount">0</span>
+            <span>/</span>
+            <span id="wrongCount">0</span>
+          </div>
+        </header>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="listen-card">
+          <button class="listen-button" id="speakBtn" aria-label="播放單字" type="button">Listen</button>
+          <button class="small-button" id="hintBtn" type="button">提示</button>
+          <button class="small-button" id="skipBtn" type="button">跳過</button>
+        </div>
+
+        <p class="feedback" id="feedback"></p>
+
+        <label class="answer-label" for="answerInput">輸入拼字</label>
+        <input id="answerInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+        <div class="action-row">
+          <button class="primary-action" id="checkBtn" type="button">確認答案</button>
+          <button class="primary-action hidden" id="nextBtn" type="button">下一題</button>
+        </div>
+        <button class="exit-action" id="exitQuizBtn" type="button">結束測驗</button>
+      </div>
+
+      <div id="practiceView" class="view hidden">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow" id="practiceLevelLabel">練習模式</p>
+            <h2>單字練習</h2>
+          </div>
+          <button class="text-button" id="practiceBackBtn" type="button">返回</button>
+        </div>
+        <input id="wordSearch" class="search-input" type="search" placeholder="搜尋單字...">
+        <div class="practice-summary">
+          <span id="libraryCount">0</span>
+          <span>個單字</span>
+        </div>
+        <ul id="wordLibrary" class="word-list"></ul>
+        <button class="exit-action" id="practiceHomeBtn" type="button">回到首頁</button>
+      </div>
+
+      <div id="resultsView" class="view hidden">
+        <div class="result-card">
+          <p class="eyebrow">測驗完成</p>
+          <h2 id="resultScore">0 / 0</h2>
+          <p id="resultMessage"></p>
+        </div>
+        <div id="wrongWordsBlock" class="review-block hidden">
+          <div class="section-title">
+            <h3>答錯的單字</h3>
+            <button class="small-button" id="retryWrongBtn" type="button">重練</button>
+          </div>
+          <ul id="wrongWordsList" class="word-list compact"></ul>
+        </div>
+        <button class="secondary-action" id="homeBtn" type="button">回到首頁</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="src/pdf-levels.generated.js"></script>
+  <script src="src/words.js"></script>
+  <script src="src/storage.js"></script>
+  <script src="src/speech.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
