@@ -20,24 +20,28 @@
       <div id="entryView" class="view">
         <div class="hero">
           <span class="hero-icon" aria-hidden="true">🐝</span>
-          <h2>請先選擇學校</h2>
-          <p>選好學校後，可以進行拼字測驗，也可以先聽單字、搜尋單字慢慢練習。</p>
+          <h2>請選擇學校</h2>
+          <p>選好後，進入專屬的 Spelling Bee 練習空間。</p>
         </div>
 
         <div class="school-picker">
-          <p class="eyebrow">學校</p>
           <div class="school-choice-grid" id="schoolChoices"></div>
         </div>
+      </div>
 
-        <div class="choice-stack">
-          <button class="choice-button" id="chooseTestingBtn" type="button">
-            <strong>測驗模式</strong>
-            <span>聽單字，輸入正確拼字</span>
-          </button>
-          <button class="choice-button" id="choosePracticeBtn" type="button">
-            <strong>練習模式</strong>
-            <span>瀏覽、搜尋、播放單字</span>
-          </button>
+      <div id="schoolHomeView" class="view hidden">
+        <div class="school-home-header">
+          <div>
+            <p class="eyebrow">學校</p>
+            <h2 id="selectedSchoolName">葳格</h2>
+          </div>
+          <button class="text-button" id="changeSchoolBtn" type="button">更換</button>
+        </div>
+
+        <div class="program-summary">
+          <p class="eyebrow">Spelling Bee</p>
+          <h3>Listen and Spell Practice</h3>
+          <p>選擇今天要練習、測驗，或直接複習答錯的單字。</p>
         </div>
 
         <div class="stats-grid">
@@ -53,6 +57,21 @@
             <span id="missedCount">0</span>
             <p>可重練單字</p>
           </article>
+        </div>
+
+        <div class="choice-stack">
+          <button class="choice-button" id="chooseTestingBtn" type="button">
+            <strong>測驗模式</strong>
+            <span>聽單字，輸入正確拼字</span>
+          </button>
+          <button class="choice-button" id="choosePracticeBtn" type="button">
+            <strong>練習模式</strong>
+            <span>瀏覽、搜尋、播放單字</span>
+          </button>
+          <button class="choice-button" id="reviewMistakesBtn" type="button">
+            <strong>複習錯字</strong>
+            <span>直接練習上次答錯的單字</span>
+          </button>
         </div>
       </div>
 

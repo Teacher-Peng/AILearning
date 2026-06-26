@@ -34,9 +34,9 @@
 
   function cacheElements() {
     const ids = [
-      "entryView","setupView","quizView","practiceView","resultsView",
-      "schoolChoices",
-      "chooseTestingBtn","choosePracticeBtn","backToEntryBtn","practiceBackBtn",
+      "entryView","schoolHomeView","setupView","quizView","practiceView","resultsView",
+      "schoolChoices","selectedSchoolName","changeSchoolBtn",
+      "chooseTestingBtn","choosePracticeBtn","reviewMistakesBtn","backToEntryBtn","practiceBackBtn",
       "activityLabel","modeSelect","testingControls","quizLimitGroup",
       "shuffleToggle","autoSpeakToggle","quizLimit","speechRate","rateValue",
       "startBtn","resetHistoryBtn","totalWordCount","lastScore","missedCount",
@@ -53,12 +53,16 @@
   }
 
   function bindEvents() {
+    elements.changeSchoolBtn.addEventListener("click", function changeSchool() {
+      showView("entry");
+    });
     elements.chooseTestingBtn.addEventListener("click", function chooseTesting() {
       chooseActivity("testing");
     });
     elements.choosePracticeBtn.addEventListener("click", function choosePractice() {
       chooseActivity("practice");
     });
+    elements.reviewMistakesBtn.addEventListener("click", reviewMistakes);
     elements.backToEntryBtn.addEventListener("click", returnHome);
     elements.practiceBackBtn.addEventListener("click", function returnToPracticeSetup() {
       showView("setup");
@@ -307,7 +311,24 @@
   }
 
   function returnHome() {
-    showView("entry");
+    renderSchoolHome();
+    showView("schoolHome");
+  }
+
+  function reviewMistakes() {
+    const missedWords = getWordsByMode("missed");
+    if (missedWords.length === 0) {
+      showSchoolHomeMessage("目前沒有錯字可以複習。");
+      return;
+    }
+    state.activity = "practice";
+    elements.modeSelect.value = "missed";
+    startPractice("missed");
+  }
+
+  function renderSchoolHome() {
+    elements.selectedSchoolName.textContent = activeSchool().label;
+    renderLevelOptions();
     renderStartStats();
   }
 
@@ -319,16 +340,33 @@
     elements.schoolChoices.replaceChildren();
     schoolCatalog.schools.forEach(function appendSchoolChoice(school) {
       const button = document.createElement("button");
+      const logoWrap = document.createElement("span");
+      const name = document.createElement("strong");
       button.type = "button";
       button.className = school.id === state.selectedSchoolId ? "school-button active" : "school-button";
-      button.textContent = school.label;
       button.setAttribute("aria-pressed", String(school.id === state.selectedSchoolId));
+      button.setAttribute("aria-label", school.label);
+
+      logoWrap.className = "school-logo-wrap";
+      if (school.logoSrc) {
+        const logo = document.createElement("img");
+        logo.src = school.logoSrc;
+        logo.alt = "";
+        logo.loading = "lazy";
+        logo.className = "school-logo";
+        logoWrap.appendChild(logo);
+      } else {
+        logoWrap.textContent = school.shortLabel;
+      }
+
+      name.textContent = school.label;
+      button.append(logoWrap, name);
       button.addEventListener("click", function selectSchool() {
         state.selectedSchoolId = school.id;
         elements.modeSelect.value = "all";
         renderSchoolChoices();
-        renderLevelOptions();
-        renderStartStats();
+        renderSchoolHome();
+        showView("schoolHome");
       });
       elements.schoolChoices.appendChild(button);
     });
@@ -440,6 +478,15 @@
     }, 1800);
   }
 
+  function showSchoolHomeMessage(message) {
+    const description = elements.reviewMistakesBtn.querySelector("span");
+    const originalText = description.textContent;
+    description.textContent = message;
+    window.setTimeout(function restoreText() {
+      description.textContent = originalText;
+    }, 1800);
+  }
+
   function showFeedback(message, type) {
     elements.feedback.textContent = message;
     elements.feedback.className = "feedback " + type;
@@ -448,6 +495,7 @@
   function showView(view) {
     state.activeView = view;
     elements.entryView.classList.toggle("hidden", view !== "entry");
+    elements.schoolHomeView.classList.toggle("hidden", view !== "schoolHome");
     elements.setupView.classList.toggle("hidden", view !== "setup");
     elements.quizView.classList.toggle("hidden", view !== "quiz");
     elements.practiceView.classList.toggle("hidden", view !== "practice");

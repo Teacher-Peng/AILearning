@@ -42,16 +42,19 @@
     });
   }
 
-  function createSchool(id, label, levels) {
+  function createSchool(id, label, levels, metadata) {
     const allLevel = createAllLevel(levels);
     const levelsById = levels.reduce(function indexLevel(result, level) {
       result[level.id] = level;
       return result;
     }, { all: allLevel });
+    const schoolMetadata = metadata || {};
 
     return Object.freeze({
       id: id,
       label: label,
+      logoSrc: schoolMetadata.logoSrc || "",
+      shortLabel: schoolMetadata.shortLabel || label.charAt(0),
       levels: Object.freeze(levels),
       levelsById: Object.freeze(levelsById),
       allLevel: allLevel,

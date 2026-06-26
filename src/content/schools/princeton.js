@@ -17,7 +17,10 @@
 
   const levels = [generatedLevels[0], levelTwo].concat(generatedLevels.slice(1)).filter(Boolean);
 
-  global.SpellingPrincetonSchool = catalog.createSchool("princeton", "普林斯頓", levels);
+  global.SpellingPrincetonSchool = catalog.createSchool("princeton", "普林斯頓", levels, {
+    logoSrc: "assets/school-logos/princeton.png",
+    shortLabel: "P"
+  });
 
   global.SpellingWords = Object.freeze({
     easy: Object.freeze(catalog.toEntries(manualLevelTwo.easy, "level-2-basic", "princeton")),
