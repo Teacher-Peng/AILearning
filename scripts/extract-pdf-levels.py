@@ -9,8 +9,8 @@ import pdfplumber
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 APP_DIR = ROOT_DIR / "spelling-bee-app"
-OUTPUT_FILE = APP_DIR / "src" / "content" / "generated" / "princeton-levels.generated.js"
-WEGOR_OUTPUT_FILE = APP_DIR / "src" / "content" / "generated" / "wegor-levels.generated.js"
+OUTPUT_FILE = APP_DIR / "src" / "content" / "schools" / "princeton" / "spelling-bee-levels.js"
+WEGOR_OUTPUT_FILE = APP_DIR / "src" / "content" / "schools" / "wegor" / "spelling-bee-levels.js"
 
 PDF_SOURCES = [
     {

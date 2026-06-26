@@ -73,3 +73,11 @@ Context: The app is moving toward a multi-school English practice platform, but 
 Decision: Organize static word data under `src/content`, reusable rules under `src/domain`, and local progress persistence under `src/storage`. Keep the current UI in `src/app.js` for now while extracting catalog, label, answer, and scoring behavior into domain modules.
 
 Rationale: This keeps the working student experience intact while making future school additions and eventual repository/database migration less invasive.
+
+### 2026-06-26 - School-Owned Content Folders
+
+Context: The earlier content layout separated files by production method, such as generated PDF output versus legacy/manual imports.
+
+Decision: Organize spelling bee word data by school under `src/content/schools/<school>/`. Keep source/provenance details as metadata inside levels instead of as top-level folders.
+
+Rationale: The product is school-first, and the app does not need to care whether words originally came from PDFs, HTML, paste, or another import path. School-owned folders make it easier to find and evolve each school's content.

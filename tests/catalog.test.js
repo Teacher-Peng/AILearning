@@ -15,11 +15,11 @@ function loadCatalog() {
 
   [
     "../src/domain/catalog.js",
-    "../src/content/generated/princeton-levels.generated.js",
-    "../src/content/generated/wegor-levels.generated.js",
-    "../src/content/manual/princeton-level-2.js",
-    "../src/content/schools/princeton.js",
-    "../src/content/schools/wegor.js",
+    "../src/content/schools/princeton/spelling-bee-levels.js",
+    "../src/content/schools/princeton/level-2.js",
+    "../src/content/schools/princeton/index.js",
+    "../src/content/schools/wegor/spelling-bee-levels.js",
+    "../src/content/schools/wegor/index.js",
     "../src/content/school-catalog.js"
   ].forEach(function clearModule(modulePath) {
     delete require.cache[require.resolve(modulePath)];
