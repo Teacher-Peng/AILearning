@@ -49,3 +49,27 @@ Context: Users may accidentally start a large test such as all levels and should
 Decision: Provide visible exit actions in long-running app areas, especially during testing. Exiting a test early concludes the test, shows the result screen, and scores only the questions already answered. If no questions were answered, no score is saved.
 
 Rationale: Users need control at every stage, and ending early should still feel like a complete session without forcing unattempted questions into the score.
+
+### 2026-06-26 - School Catalog
+
+Context: The app now needs to support multiple schools. Existing levels belong to 普林斯頓, and the new Grade 2 PDF belongs to 葳格.
+
+Decision: Model spelling data as schools containing reusable level catalogs, with each level containing word entries. The app asks users to choose a school first, then reuses the same testing and practice flows against the active school catalog.
+
+Rationale: Keeping school selection as data context lets most quiz, practice, scoring, search, and speech code stay shared. Future schools or levels can be added by extending data extraction and catalog registration instead of duplicating screens.
+
+### 2026-06-26 - Refactor Safety Tests
+
+Context: The school word data will likely be reorganized so different schools live in one consistent content structure.
+
+Decision: Add lightweight Node tests before the refactor to lock down current catalog counts, school separation, generated 葳格 word order, legacy catalog compatibility, and local storage behavior.
+
+Rationale: Tests make the upcoming content refactor safer by distinguishing intentional structure changes from accidental behavior changes.
+
+### 2026-06-26 - Content and Domain Boundaries
+
+Context: The app is moving toward a multi-school English practice platform, but it does not need a database or framework yet.
+
+Decision: Organize static word data under `src/content`, reusable rules under `src/domain`, and local progress persistence under `src/storage`. Keep the current UI in `src/app.js` for now while extracting catalog, label, answer, and scoring behavior into domain modules.
+
+Rationale: This keeps the working student experience intact while making future school additions and eventual repository/database migration less invasive.

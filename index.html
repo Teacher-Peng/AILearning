@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>蜜蜂拼字練習</title>
+  <title>Spelling Bee</title>
   <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
@@ -12,16 +12,21 @@
       <header class="brand">
         <span class="brand-mark" aria-hidden="true">🐝</span>
         <div>
-          <h1>蜜蜂拼字練習</h1>
-          <p>萬字王練習系統</p>
+          <h1>Spelling Bee</h1>
+          <p>Listen and Spell Practice</p>
         </div>
       </header>
 
       <div id="entryView" class="view">
         <div class="hero">
           <span class="hero-icon" aria-hidden="true">🐝</span>
-          <h2>請選擇練習方式</h2>
-          <p>可以進行拼字測驗，也可以先聽單字、搜尋單字慢慢練習。</p>
+          <h2>請先選擇學校</h2>
+          <p>選好學校後，可以進行拼字測驗，也可以先聽單字、搜尋單字慢慢練習。</p>
+        </div>
+
+        <div class="school-picker">
+          <p class="eyebrow">學校</p>
+          <div class="school-choice-grid" id="schoolChoices"></div>
         </div>
 
         <div class="choice-stack">
@@ -168,9 +173,16 @@
     </section>
   </main>
 
-  <script src="src/pdf-levels.generated.js"></script>
-  <script src="src/words.js"></script>
-  <script src="src/storage.js"></script>
+  <script src="src/domain/catalog.js"></script>
+  <script src="src/domain/level-labels.js"></script>
+  <script src="src/domain/quiz-session.js"></script>
+  <script src="src/content/generated/princeton-levels.generated.js"></script>
+  <script src="src/content/generated/wegor-levels.generated.js"></script>
+  <script src="src/content/manual/princeton-level-2.js"></script>
+  <script src="src/content/schools/princeton.js"></script>
+  <script src="src/content/schools/wegor.js"></script>
+  <script src="src/content/school-catalog.js"></script>
+  <script src="src/storage/progress-storage.js"></script>
   <script src="src/speech.js"></script>
   <script src="src/app.js"></script>
 </body>

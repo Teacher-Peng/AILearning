@@ -9,7 +9,8 @@ import pdfplumber
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 APP_DIR = ROOT_DIR / "spelling-bee-app"
-OUTPUT_FILE = APP_DIR / "src" / "pdf-levels.generated.js"
+OUTPUT_FILE = APP_DIR / "src" / "content" / "generated" / "princeton-levels.generated.js"
+WEGOR_OUTPUT_FILE = APP_DIR / "src" / "content" / "generated" / "wegor-levels.generated.js"
 
 PDF_SOURCES = [
     {
@@ -71,6 +72,17 @@ PDF_SOURCES = [
     },
 ]
 
+WEGOR_SOURCES = [
+    {
+        "id": "wegor-grade-2",
+        "label": "Grade 2",
+        "subtitle": "葳格 Grade 2",
+        "file": "G2 Spelling Bee Words-2026-2027.pdf",
+        "format": "numbered",
+        "expected_count": 250,
+    },
+]
+
 POS_PATTERN = (
     r"n|v|adj|adv|prep|conj|interj|pron|"
     r"Adj|αdj"
@@ -84,12 +96,22 @@ WORD_PATTERN = re.compile(r"^[A-Za-z]+$")
 
 
 def main() -> None:
+    princeton_levels = extract_sources(PDF_SOURCES)
+    wegor_levels = extract_sources(WEGOR_SOURCES)
+
+    write_js(OUTPUT_FILE, "SpellingPdfLevels", princeton_levels)
+    write_js(WEGOR_OUTPUT_FILE, "SpellingWegorLevels", wegor_levels)
+
+
+def extract_sources(sources: list[dict[str, object]]) -> list[dict[str, object]]:
     levels = []
-    for source in PDF_SOURCES:
+    for source in sources:
         pdf_path = ROOT_DIR / source["file"]
         text_lines = extract_lines(pdf_path)
         if source["format"] == "compact":
             entries = parse_compact_words(text_lines)
+        elif source["format"] == "numbered":
+            entries = parse_numbered_words(text_lines)
         else:
             entries = parse_definition_words(text_lines)
 
@@ -108,8 +130,7 @@ def main() -> None:
                 "words": entries,
             }
         )
-
-    write_js(levels)
+    return levels
 
 
 def extract_lines(pdf_path: Path) -> list[str]:
@@ -182,12 +203,43 @@ def parse_definition_words(lines: list[str]) -> list[dict[str, str]]:
     return make_entries(entries)
 
 
+def parse_numbered_words(lines: list[str]) -> list[dict[str, str]]:
+    entries_by_number = {}
+    for line in lines:
+        if is_ignored_numbered_line(line):
+            continue
+
+        line = remove_award_text(line)
+        for match in re.finditer(
+            r"(?:^|\s)(\d{1,3})\.??\s+(.+?)(?=(?:\s+\d{1,3}\.?\s+)|$)",
+            line,
+        ):
+            number = int(match.group(1))
+            word = clean_numbered_word(match.group(2))
+            if word:
+                entries_by_number[number] = {"word": word}
+
+    return [entries_by_number[number] for number in sorted(entries_by_number)]
+
+
 def is_ignored_definition_line(line: str) -> bool:
     if PAGE_NUMBER_PATTERN.fullmatch(line):
         return True
     if LETTER_PATTERN.fullmatch(line):
         return True
     if line.startswith(("Grade ", "Literature ")):
+        return True
+    return False
+
+
+def is_ignored_numbered_line(line: str) -> bool:
+    if not line:
+        return True
+    if line.startswith("Spelling Bee Words"):
+        return True
+    if line == "2026":
+        return True
+    if set(line.split()) == {"words"}:
         return True
     return False
 
@@ -228,10 +280,19 @@ def clean_definition(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" .")
 
 
-def write_js(levels: list[dict[str, object]]) -> None:
+def remove_award_text(value: str) -> str:
+    return re.sub(r"\b(?:Gold|Silver|Bronze)\s*[–-]\s*\d+\s*以上.*$", "", value).strip()
+
+
+def clean_numbered_word(value: str) -> str:
+    word = re.sub(r"\s+", " ", value).strip(" .")
+    return word
+
+
+def write_js(output_file: Path, global_name: str, levels: list[dict[str, object]]) -> None:
     payload = json.dumps(levels, ensure_ascii=False, indent=2)
-    OUTPUT_FILE.write_text(
-        "window.SpellingPdfLevels = Object.freeze("
+    output_file.write_text(
+        "window." + global_name + " = Object.freeze("
         + payload
         + ");\n",
         encoding="utf-8",

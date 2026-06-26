@@ -1,11 +1,15 @@
 (function registerApp(global) {
-  const catalog = global.SpellingLevelCatalog;
+  const schoolCatalog = global.SpellingSchoolCatalog;
+  const catalogDomain = global.SpellingCatalogDomain;
+  const levelLabels = global.SpellingLevelLabels;
+  const quizSession = global.SpellingQuizSession;
   const storage = global.SpellingStorage;
   const speech = global.SpellingSpeech;
 
   const state = {
     activeView: "entry",
     activity: "testing",
+    selectedSchoolId: schoolCatalog.defaultSchoolId,
     quiz: [],
     index: 0,
     correct: 0,
@@ -20,6 +24,7 @@
 
   function init() {
     cacheElements();
+    renderSchoolChoices();
     renderLevelOptions();
     bindEvents();
     renderStartStats();
@@ -30,6 +35,7 @@
   function cacheElements() {
     const ids = [
       "entryView","setupView","quizView","practiceView","resultsView",
+      "schoolChoices",
       "chooseTestingBtn","choosePracticeBtn","backToEntryBtn","practiceBackBtn",
       "activityLabel","modeSelect","testingControls","quizLimitGroup",
       "shuffleToggle","autoSpeakToggle","quizLimit","speechRate","rateValue",
@@ -99,18 +105,11 @@
   }
 
   function allWords() {
-    return catalog.allWords;
+    return activeSchool().allWords;
   }
 
   function getWordsByMode(mode) {
-    if (mode === "missed") {
-      const missed = storage.getMissedWords();
-      return allWords().filter(function isMissed(entry) {
-        return isMissedEntry(entry, missed);
-      });
-    }
-    const level = catalog.levelsById[mode] || catalog.allLevel;
-    return level.words;
+    return catalogDomain.getWordsByMode(activeSchool(), mode, storage.getMissedWords());
   }
 
   function startQuiz(mode) {
@@ -200,7 +199,7 @@
 
   function checkAnswer() {
     const entry = state.quiz[state.index];
-    const answer = normalizeAnswer(elements.answerInput.value);
+    const answer = quizSession.normalizeAnswer(elements.answerInput.value);
     if (!answer) {
       elements.answerInput.focus();
       return;
@@ -210,7 +209,7 @@
       return;
     }
 
-    const isCorrect = answer === normalizeAnswer(entry.word);
+    const isCorrect = quizSession.isCorrectAnswer(answer, entry.word);
     if (isCorrect) {
       state.correct += 1;
       revealAnswer("答對了。", true);
@@ -254,11 +253,12 @@
   }
 
   function concludeQuiz(total) {
-    const percent = total > 0 ? Math.round((state.correct / total) * 100) : 0;
-    const uniqueWrongWordIds = uniqueWords(state.wrongWords);
+    const percent = quizSession.percentCorrect(state.correct, total);
+    const uniqueWrongWordIds = quizSession.uniqueWords(state.wrongWords);
     if (total > 0) {
       storage.saveSession({
         date: new Date().toISOString(),
+        schoolId: activeSchool().id,
         total: total,
         correct: state.correct,
         percent: percent,
@@ -285,7 +285,7 @@
   function retryWrongWords() {
     const missed = storage.getMissedWords();
     state.quiz = allWords().filter(function isMissed(entry) {
-      return isMissedEntry(entry, missed);
+      return catalogDomain.isMissedEntry(entry, missed);
     });
     if (elements.shuffleToggle.checked) {
       state.quiz = shuffle(state.quiz);
@@ -311,18 +311,48 @@
     renderStartStats();
   }
 
+  function activeSchool() {
+    return catalogDomain.getSchool(schoolCatalog, state.selectedSchoolId);
+  }
+
+  function renderSchoolChoices() {
+    elements.schoolChoices.replaceChildren();
+    schoolCatalog.schools.forEach(function appendSchoolChoice(school) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = school.id === state.selectedSchoolId ? "school-button active" : "school-button";
+      button.textContent = school.label;
+      button.setAttribute("aria-pressed", String(school.id === state.selectedSchoolId));
+      button.addEventListener("click", function selectSchool() {
+        state.selectedSchoolId = school.id;
+        elements.modeSelect.value = "all";
+        renderSchoolChoices();
+        renderLevelOptions();
+        renderStartStats();
+      });
+      elements.schoolChoices.appendChild(button);
+    });
+  }
+
   function renderStartStats() {
     const history = storage.getHistory();
     const missed = storage.getMissedWords();
+    const school = activeSchool();
+    const latestSchoolSession = history.find(function matchesSchool(session) {
+      return session.schoolId === school.id;
+    });
     elements.totalWordCount.textContent = String(allWords().length);
-    elements.lastScore.textContent = history.length > 0 ? history[0].percent + "%" : "--";
-    elements.missedCount.textContent = String(missed.length);
+    elements.lastScore.textContent = latestSchoolSession ? latestSchoolSession.percent + "%" : "--";
+    elements.missedCount.textContent = String(allWords().filter(function isMissed(entry) {
+      return catalogDomain.isMissedEntry(entry, missed);
+    }).length);
   }
 
   function renderLevelOptions() {
+    const school = activeSchool();
     elements.modeSelect.replaceChildren();
     elements.modeSelect.appendChild(createOption("all", "全部等級（" + allWords().length + "）"));
-    catalog.levels.forEach(function appendLevelOption(level) {
+    school.levels.forEach(function appendLevelOption(level) {
       elements.modeSelect.appendChild(createOption(level.id, displayLevelLabel(level) + "（" + level.words.length + "）"));
     });
     elements.modeSelect.appendChild(createOption("missed", "上次答錯"));
@@ -352,7 +382,7 @@
     const wordText = document.createElement("strong");
     const detailText = document.createElement("em");
     const button = document.createElement("button");
-    const level = catalog.levelsById[entry.levelId];
+    const level = levelByEntry(entry);
 
     wordText.textContent = entry.word;
     detailText.textContent = wordDetail(entry, level);
@@ -435,35 +465,25 @@
     return shuffled;
   }
 
-  function normalizeAnswer(value) {
-    return value.trim().replace(/\s+/g, " ").toLowerCase();
-  }
-
-  function uniqueWords(wordList) {
-    return Array.from(new Set(wordList));
-  }
-
   function modeLabel(mode) {
     if (mode === "missed") {
       return "上次答錯";
     }
-    const level = catalog.levelsById[mode] || catalog.allLevel;
+    const school = activeSchool();
+    const level = school.levelsById[mode] || school.allLevel;
     return level.id === "all" ? "全部等級" : displayLevelLabel(level);
   }
 
   function displayLevelLabel(level) {
-    return level.label.replace("Level", "第") + " 級";
+    return levelLabels.displayLevelLabel(level);
+  }
+
+  function levelByEntry(entry) {
+    return catalogDomain.findLevelForEntry(schoolCatalog, entry, activeSchool());
   }
 
   function entriesByIds(ids) {
-    const idSet = new Set(ids);
-    return allWords().filter(function hasId(entry) {
-      return idSet.has(entry.id) || idSet.has(entry.word);
-    });
-  }
-
-  function isMissedEntry(entry, missed) {
-    return missed.includes(entry.id) || missed.includes(entry.word);
+    return catalogDomain.entriesByIds(activeSchool(), ids);
   }
 
   function wordDetail(entry, level) {
@@ -481,15 +501,6 @@
   }
 
   function resultMessage(percent) {
-    if (percent >= 90) {
-      return "太棒了，已經很穩。";
-    }
-    if (percent >= 70) {
-      return "很不錯，再練幾個錯字就更完整。";
-    }
-    if (percent >= 50) {
-      return "有基礎了，建議先重練答錯單字。";
-    }
-    return "先慢慢練聽音和首字母，不急。";
+    return quizSession.resultMessage(percent);
   }
 })(window);
